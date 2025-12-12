@@ -5,49 +5,35 @@ __pycache__/
 *.so
 .Python
 build/
-develop-eggs/
 dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
 *.egg-info/
-.installed.cfg
-*.egg
-
-# Virtual Environment
+.venv
 venv/
 ENV/
-env/
+
+# 환경 변수 (민감 정보)
+.env
+.env.local
+
+# 데이터 파일
+*.mp3
+*.mp4
+*.wav
+
+# 모델 캐시
+*.pt
+*.bin
+models/cache/
 
 # IDE
 .vscode/
 .idea/
 *.swp
-*.swo
-*~
+
+# 로그
+*.log
 
 # OS
 .DS_Store
 Thumbs.db
-
-# Logs
-*.log
-
-# Environment variables
-.env
-
-# Model cache (Hugging Face)
-.cache/
-models/
-
-# Plan files
-*.plan.md
-
-# Test outputs
-test_output/
+structure/data/

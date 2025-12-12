@@ -1,0 +1,11 @@
+[
+  {"id": 1, "claim": "한강에서 괴물이 발견되었다", "category": "absurd_rumor"},
+  {"id": 2, "claim": "5G 전파가 코로나 바이러스를 유발한다", "category": "conspiracy_theory"},
+  {"id": 3, "claim": "삼성전자가 내일 파산을 선언한다", "category": "plausible_rumor"},
+  {"id": 4, "claim": "전자담배는 일반 담배보다 유해하지 않다", "category": "controversial_health"},
+  {"id": 5, "claim": "애플이 아이폰17 발표를 연기한다고 발표했다", "category": "tech_rumor"},
+  {"id": 6, "claim": "윤석열 대통령이 사퇴를 발표했다", "category": "political_rumor"},
+  {"id": 7, "claim": "서울역에 성심당이 오픈 예정이다", "category": "local_business_rumor"},
+  {"id": 8, "claim": "UFO가 광화문에 착륙했다", "category": "absurd_rumor"}
+]
+

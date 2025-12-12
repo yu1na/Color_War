@@ -1,0 +1,8 @@
+python-dotenv==1.0.0
+google-api-python-client==2.100.0
+scikit-learn==1.5.2
+bertopic==0.16.1
+sentence-transformers==2.7.0
+umap-learn==0.5.5
+hdbscan==0.8.36
+

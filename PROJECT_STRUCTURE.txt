@@ -1,0 +1,629 @@
+================================================================================
+ColorsWar 프로젝트 - 전체 구조 및 설명
+================================================================================
+
+📦 ColorWar
+│
+├─ 📁 factcheck/                    # 팩트체크 시스템 (뉴스 기반 자동 검증)
+│  │
+│  ├─ 📁 models/                    # 핵심 모델
+│  │  ├─ __init__.py
+│  │  ├─ evidence_searcher.py       # 하이브리드 검색 (BM25 + Sentence Embedding)
+│  │  │                             - 네이버 API + DuckDuckGo 검색
+│  │  │                             - 뉴스 20개 수집 (한국 10 + 해외 10)
+│  │  │                             - 키워드 기반 + 의미 기반 검색
+│  │  │
+│  │  ├─ judge_local.py              # 판정 시스템
+│  │  │                             - True/False/Uncertain 판정
+│  │  │                             - 최종 결과 생성
+│  │  │
+│  │  ├─ confidence_scorer.py       # 신뢰도 계산 (0-10점)
+│  │  │                             - Rule-based: 출처, 최신성, 매칭 강도
+│  │  │                             - Evidence 개수별 차등 점수
+│  │  │                             - 10점 만점 스케일링
+│  │  │
+│  │  ├─ document_source.py         # DuckDuckGo 검색
+│  │  │                             - 해외 뉴스 수집
+│  │  │                             - API 키 불필요
+│  │  │
+│  │  ├─ document_source_naver.py   # 네이버 뉴스 API
+│  │  │                             - 한국 뉴스 수집
+│  │  │                             - API 키 없으면 크롤링 폴백
+│  │  │
+│  │  └─ document_source_universal.py # 통합 검색
+│  │                                 - 네이버 + DuckDuckGo 결과 통합
+│  │
+│  ├─ 📁 utils/                     # 유틸리티
+│  │  ├─ __init__.py
+│  │  └─ text_processing.py         # 텍스트 처리 (정규화, 필터링)
+│  │
+│  ├─ 📁 data/                      # 테스트 데이터
+│  │  ├─ mock_claims.json           # 테스트용 주장 목록
+│  │  ├─ mock_documents.json        # 테스트용 문서 목록
+│  │  └─ rumor_test_cases.json      # 루머 테스트 케이스
+│  │
+│  ├─ api.py                        # FastAPI 서버
+│  │                                - POST /factcheck: 단일 팩트체크
+│  │                                - POST /factcheck/batch: 배치 처리
+│  │                                - GET /health: 헬스체크
+│  │                                - 자동 문서화 (Swagger UI)
+│  │
+│  ├─ main_universal.py             # CLI 메인 프로그램
+│  │                                - 단일 주장 팩트체크
+│  │                                - 컬러풀한 결과 출력
+│  │
+│  ├─ batch_test.py                 # 배치 테스트 스크립트
+│  │                                - 여러 주장 동시 테스트
+│  │                                - 성능 측정
+│  │
+│  ├─ test_api.py                   # API 테스트 스크립트
+│  │                                - API 엔드포인트 테스트
+│  │
+│  └─ requirements.txt              # Python 패키지 의존성
+│                                   - sentence-transformers (임베딩)
+│                                   - transformers, torch (딥러닝)
+│                                   - rank-bm25 (BM25 알고리즘)
+│                                   - beautifulsoup4 (크롤링)
+│                                   - ddgs (DuckDuckGo 검색)
+│                                   - fastapi, uvicorn (API 서버)
+│                                   - openai (LLM - 선택)
+│                                   - python-dotenv (환경변수)
+│
+├─ 📁 persona/                      # 정치 댓글 전쟁 시뮬레이터 (로컬 LLM 버전)
+│  │
+│  ├─ 📁 backend/                   # FastAPI 백엔드 서버
+│  │  │
+│  │  ├─ 📁 config/                 # 설정 관리
+│  │  │  ├─ __init__.py
+│  │  │  └─ settings.py             # 중앙 설정 관리
+│  │  │                             - 서버 호스트/포트
+│  │  │                             - LLM 모델명
+│  │  │                             - 디바이스 (CPU/CUDA)
+│  │  │                             - 환경 변수 지원
+│  │  │
+│  │  ├─ 📁 core/                   # 핵심 모듈
+│  │  │  ├─ __init__.py
+│  │  │  └─ state.py                # 전역 상태 관리 (싱글톤)
+│  │  │                             - AppState 클래스
+│  │  │                             - persona_engine, debater_manager
+│  │  │
+│  │  ├─ 📁 routes/                 # API 라우터
+│  │  │  ├─ __init__.py
+│  │  │  ├─ comments.py             # 댓글 수집 API
+│  │  │  │                          - POST /api/comments/left
+│  │  │  │                          - POST /api/comments/right
+│  │  │  │                          - GET /api/comments/stats
+│  │  │  │                          - POST /api/comments/reset
+│  │  │  │
+│  │  │  ├─ persona.py              # 페르소나 생성 API
+│  │  │  │                          - POST /api/comments/generate-persona
+│  │  │  │
+│  │  │  ├─ debate.py               # 토론 시뮬레이션 API
+│  │  │  │                          - POST /api/debate/start
+│  │  │  │                          - POST /api/debate/next
+│  │  │  │                          - GET /api/debate/status
+│  │  │  │                          - POST /api/debate/reset
+│  │  │  │
+│  │  │  └─ health.py               # 헬스체크 API
+│  │  │                             - GET /api/health
+│  │  │
+│  │  ├─ 📁 services/               # 비즈니스 로직 레이어
+│  │  │  ├─ __init__.py
+│  │  │  ├─ comment_service.py      # 댓글 관련 로직
+│  │  │  ├─ persona_service.py      # 페르소나 생성 로직
+│  │  │  └─ debate_service.py       # 토론 관리 로직
+│  │  │
+│  │  ├─ main.py                    # FastAPI 앱 진입점
+│  │  │                             - 앱 초기화
+│  │  │                             - CORS 미들웨어
+│  │  │                             - 라우터 등록
+│  │  │
+│  │  ├─ models.py                  # Pydantic 데이터 모델
+│  │  │                             - Side, AnalysisResult
+│  │  │                             - Argument, EmotionalPattern
+│  │  │                             - DebateMessage, DebateState
+│  │  │                             - CommentSubmission, CommentStats
+│  │  │
+│  │  ├─ ai_debater.py              # AI 토론자 시스템
+│  │  │                             - AIDebater 클래스 (개별 토론자)
+│  │  │                             - DebaterManager 클래스 (관리)
+│  │  │                             - skt/kogpt2-base-v2 모델
+│  │  │                             - 8bit 양자화 (VRAM 4-5GB)
+│  │  │
+│  │  ├─ analyzer.py                # 댓글 분석 엔진
+│  │  │                             - 규칙 기반 고속 분석
+│  │  │                             - 논점 추출, 감정 패턴 분석
+│  │  │
+│  │  ├─ sentiment_tracker.py       # 감정 추적 시스템
+│  │  │                             - 토론 감정 레벨 추적
+│  │  │                             - 자동 주제 전환
+│  │  │
+│  │  └─ requirements.txt           # Python 패키지 의존성
+│  │                                - fastapi, uvicorn
+│  │                                - transformers, torch
+│  │                                - accelerate, bitsandbytes
+│  │                                - pydantic, pydantic-settings
+│  │
+│  ├─ 📁 model/                     # 페르소나 엔진
+│  │  └─ comment_persona_engine.py  # 댓글 기반 페르소나 생성
+│  │                                - CommentPersonaEngine 클래스
+│  │                                - 댓글 수집 및 저장
+│  │                                - LLM 기반 페르소나 생성
+│  │
+│  ├─ 📁 venv/                      # Python 가상환경
+│  │
+│  ├─ install.bat                   # Windows 설치 스크립트
+│  ├─ install.sh                    # Linux/Mac 설치 스크립트
+│  ├─ start_server.bat              # Windows 서버 실행
+│  ├─ start_server.sh               # Linux/Mac 서버 실행
+│  ├─ test_api.py                   # API 테스트 스크립트
+│  ├─ test.bat                      # Windows 테스트 실행
+│  └─ test.sh                       # Linux/Mac 테스트 실행
+│
+├─ 📁 structure/                    # YouTube 파이프라인 + 배틀 시스템
+│  │
+│  ├─ 📁 youtube_pipeline/          # YouTube 자동화 파이프라인
+│  │  ├─ __init__.py
+│  │  ├─ youtube_full_pipeline.py   # 메인 파이프라인
+│  │  │                             - 전체 워크플로우 통합
+│  │  │
+│  │  ├─ audio.py                   # 오디오 다운로드
+│  │  │                             - yt-dlp 사용
+│  │  │                             - MP3 변환
+│  │  │
+│  │  ├─ transcribe.py              # 음성-텍스트 변환
+│  │  │                             - OpenAI Whisper
+│  │  │
+│  │  ├─ summarizer.py              # 스크립트 요약
+│  │  │                             - LLM 기반 요약
+│  │  │
+│  │  ├─ comments.py                # 댓글 수집
+│  │  │                             - YouTube Data API
+│  │  │
+│  │  ├─ analyzer.py                # 댓글 분석
+│  │  │                             - 좌파/우파 분류
+│  │  │                             - ForceReclassifier 사용
+│  │  │
+│  │  └─ saver.py                   # 결과 저장
+│  │                                - JSON, TXT 저장
+│  │
+│  ├─ 📁 comments_topic/            # 토픽 모델링
+│  │  ├─ 📁 src/
+│  │  │  ├─ comments_topic.py       # BERTopic 기반 주제 추출
+│  │  │  └─ extract_comments.py     # 댓글 추출 유틸
+│  │  │
+│  │  ├─ 📁 hdbscan/                # 클러스터링
+│  │  ├─ 📁 comments_result/        # 결과 저장
+│  │  └─ requirements.txt           # 토픽 모델링 의존성
+│  │                                - bertopic
+│  │                                - sentence-transformers
+│  │                                - umap-learn, hdbscan
+│  │
+│  ├─ 📁 comments_leftright/        # 좌우파 분류 결과
+│  ├─ 📁 comments/                  # 원본 댓글
+│  ├─ 📁 scripts/                   # 변환된 스크립트
+│  ├─ 📁 summaries/                 # 요약본
+│  ├─ 📁 results/                   # 분석 결과
+│  ├─ 📁 audio/                     # 다운로드된 오디오
+│  │
+│  ├─ 📁 static/                    # 웹 UI
+│  │  ├─ battle.html                # 배틀 시스템 UI
+│  │  ├─ battle.js                  # 프론트엔드 로직
+│  │  ├─ test_comments.html         # 댓글 테스트 UI
+│  │  └─ test_comments.js           # 댓글 테스트 로직
+│  │
+│  ├─ app_battle.py                 # FastAPI 메인 앱
+│  │                                - YouTube 파이프라인 API
+│  │                                - 페르소나 배틀 API
+│  │                                - 정적 파일 서빙
+│  │
+│  ├─ persona_service.py            # 페르소나 배틀 서비스
+│  │                                - 페르소나 초기화
+│  │                                - 토론 시뮬레이션
+│  │
+│  ├─ reclassifier.py               # 강제 재분류기
+│  │                                - 댓글 좌우파 재분류
+│  │
+│  └─ requirements.txt              # YouTube 파이프라인 의존성
+│                                   - fastapi, uvicorn
+│                                   - openai-whisper
+│                                   - yt-dlp
+│                                   - ffmpeg-python
+│                                   - google-api-python-client
+│
+├─ learning_p_jh.py                 # 학습 스크립트 (개발용)
+├─ mae_jh.py                        # MAE 계산 (개발용)
+└─ start_fight_jh.py                # 전투 시작 (개발용)
+
+================================================================================
+주요 데이터 흐름
+================================================================================
+
+1. 팩트체크 시스템
+   주장 입력 → Evidence 수집 (하이브리드 검색)
+   → Evidence 평가 (관련도 측정)
+   → 신뢰도 계산 (0-10점)
+   → 최종 판정 (True/False/Uncertain)
+
+2. 페르소나 시스템
+   댓글 수집 → 페르소나 생성 (LLM)
+   → 토론 시작 → AI 메시지 생성
+   → 감정 추적 → 주제 전환/종료
+
+3. YouTube 파이프라인
+   YouTube URL 입력 → 오디오 다운로드
+   → 음성-텍스트 변환 → 스크립트 요약
+   → 댓글 수집 → 좌우파 분류
+   → 페르소나 배틀 → 토론 시뮬레이션
+
+================================================================================
+아키텍처 설계
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────┐
+│                     FastAPI 애플리케이션                         │
+│  factcheck (포트 8000) | persona (포트 8000) | structure (포트) │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│                      API 라우터 레이어                           │
+│  /factcheck | /api/comments | /api/debate | /youtube-pipeline  │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│                    비즈니스 로직 레이어                          │
+│  EvidenceSearcher | PersonaEngine | YouTubeFullPipeline         │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│                       LLM/ML 모델 레이어                        │
+│  Sentence-Transformers | KoGPT2 | Whisper | BERTopic            │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│                    외부 서비스 / 데이터                          │
+│  네이버 API | DuckDuckGo | YouTube API | 로컬 파일              │
+└─────────────────────────────────────────────────────────────────┘
+
+================================================================================
+의존성 설치 가이드
+================================================================================
+
+1️⃣ 팩트체크 시스템 (factcheck/)
+   
+   cd factcheck
+   pip install -r requirements.txt
+   
+   필수 패키지:
+   - sentence-transformers>=2.2.2       # 문장 임베딩
+   - transformers>=4.30.0              # Transformer 모델
+   - torch>=2.0.0                      # PyTorch
+   - rank-bm25>=0.2.2                  # BM25 검색
+   - numpy>=1.24.0                     # 수치 계산
+   - scikit-learn>=1.3.0               # ML 유틸
+   - beautifulsoup4>=4.12.0            # 웹 크롤링
+   - requests>=2.31.0                  # HTTP 요청
+   - ddgs>=1.0.0                       # DuckDuckGo 검색
+   - fastapi>=0.104.0                  # API 서버
+   - uvicorn>=0.24.0                   # ASGI 서버
+   - pydantic>=2.0.0                   # 데이터 검증
+   - openai>=1.0.0                     # OpenAI API (선택)
+   - python-dotenv>=1.0.0              # 환경변수
+   
+   환경 설정 (선택):
+   .env 파일 생성 후 네이버 API 키 입력
+   NAVER_CLIENT_ID=your_id
+   NAVER_CLIENT_SECRET=your_secret
+
+2️⃣ 페르소나 시스템 (persona/backend/)
+   
+   cd persona/backend
+   pip install -r requirements.txt
+   
+   필수 패키지:
+   - fastapi==0.109.0                  # API 서버
+   - uvicorn[standard]==0.27.0         # ASGI 서버
+   - transformers==4.46.0              # Transformer 모델
+   - torch==2.5.1                      # PyTorch
+   - accelerate==0.34.0                # 분산 학습
+   - bitsandbytes==0.44.1              # 양자화
+   - pydantic==2.6.0                   # 데이터 검증
+   - pydantic-settings==2.1.0          # 설정 관리
+   - python-multipart==0.0.6           # 파일 업로드
+   - python-dotenv==1.0.0              # 환경변수
+   - sentencepiece==0.2.0              # 토크나이저
+   - protobuf==4.25.1                  # Protocol Buffers
+   
+   하드웨어 요구사항:
+   - GPU: NVIDIA GPU (VRAM 6GB 이상)
+   - CUDA 11.8 이상
+   - RAM: 16GB 이상
+
+3️⃣ YouTube 파이프라인 (structure/)
+   
+   cd structure
+   pip install -r requirements.txt
+   
+   필수 패키지:
+   - fastapi>=0.104.0                  # API 서버
+   - uvicorn>=0.24.0                   # ASGI 서버
+   - requests>=2.32.0                  # HTTP 요청
+   - python-dotenv>=1.0.0              # 환경변수
+   - google-api-python-client>=2.0.0   # YouTube API
+   - openai-whisper>=20231117          # 음성-텍스트
+   - yt-dlp>=2023.12.30                # YouTube 다운로드
+   - ffmpeg-python>=0.2.0              # 오디오 처리
+   
+   토픽 모델링 추가 (structure/comments_topic/):
+   cd structure/comments_topic
+   pip install -r requirements.txt
+   
+   - python-dotenv==1.0.0              # 환경변수
+   - google-api-python-client==2.100.0 # YouTube API
+   - scikit-learn==1.5.2               # ML
+   - bertopic==0.16.1                  # 토픽 모델링
+   - sentence-transformers==2.7.0      # 문장 임베딩
+   - umap-learn==0.5.5                 # 차원 축소
+   - hdbscan==0.8.36                   # 클러스터링
+   
+   환경 설정:
+   .env 파일 생성 후 YouTube API 키 입력
+   YOUTUBE_API_KEY=your_api_key
+
+4️⃣ 시스템 패키지 (OS별 설치 필요)
+   
+   # FFmpeg (오디오 처리용)
+   
+   Windows (Chocolatey):
+   choco install ffmpeg
+   
+   macOS (Homebrew):
+   brew install ffmpeg
+   
+   Ubuntu/Debian:
+   sudo apt update && sudo apt install ffmpeg
+
+================================================================================
+실행 가이드
+================================================================================
+
+1️⃣ 팩트체크 시스템
+   
+   # 서버 실행
+   cd factcheck
+   uvicorn api:app --reload --host 0.0.0.0 --port 8000
+   
+   # CLI 테스트
+   python main_universal.py --claim "M5맥북 출시 임박"
+   
+   # 배치 테스트
+   python batch_test.py rumor_test_cases.json
+   
+   # API 문서: http://localhost:8000/docs
+
+2️⃣ 페르소나 시스템
+   
+   # Windows
+   cd persona
+   install.bat          # 최초 1회
+   start_server.bat     # 서버 실행
+   test.bat             # 테스트
+   
+   # Linux/Mac
+   cd persona
+   ./install.sh         # 최초 1회
+   ./start_server.sh    # 서버 실행
+   ./test.sh            # 테스트
+   
+   # API 문서: http://localhost:8000/docs
+
+3️⃣ YouTube 파이프라인
+   
+   # 서버 실행
+   cd structure
+   uvicorn app_battle:app --reload --host 0.0.0.0 --port 8001
+   
+   # 웹 UI: http://localhost:8001/
+   
+   # API 테스트
+   curl -X POST "http://localhost:8001/youtube-pipeline" \
+        -H "Content-Type: application/json" \
+        -d '{
+          "youtube_url": "https://www.youtube.com/watch?v=VIDEO_ID",
+          "topic": "현재 정부 정책",
+          "rounds": 5
+        }'
+
+================================================================================
+프로젝트 특징
+================================================================================
+
+✅ 모듈화 아키텍처
+   - 각 모듈 독립 실행 가능
+   - REST API로 연동
+   - 계층 분리 (Router → Service → Model)
+
+✅ LLM 기반 AI
+   - 로컬 GPU 실행 (프라이버시 보장)
+   - 8bit 양자화 (메모리 효율)
+   - 한국어 특화 모델
+
+✅ 하이브리드 검색
+   - 키워드 기반 (BM25)
+   - 의미 기반 (Sentence Embedding)
+   - 높은 정확도
+
+✅ 자동화 파이프라인
+   - YouTube → 스크립트 → 댓글 → 분석 → 토론
+   - 전체 과정 자동화
+   - 웹 UI 제공
+
+✅ 확장성
+   - 새 모듈 쉽게 추가
+   - API 기반 통합
+   - 설정 중앙 관리
+
+================================================================================
+주요 기술 스택
+================================================================================
+
+🔹 백엔드 프레임워크
+   - FastAPI                # 고성능 비동기 API 서버
+   - Uvicorn                # ASGI 서버
+   - Pydantic               # 데이터 검증
+
+🔹 머신러닝/딥러닝
+   - PyTorch                # 딥러닝 프레임워크
+   - Transformers           # Hugging Face Transformers
+   - Sentence-Transformers  # 문장 임베딩
+   - BERTopic               # 토픽 모델링
+   - OpenAI Whisper         # 음성-텍스트
+
+🔹 언어 모델
+   - skt/kogpt2-base-v2     # 한국어 GPT-2
+   - paraphrase-multilingual-MiniLM # 다국어 임베딩
+
+🔹 검색/분석
+   - rank-bm25              # BM25 알고리즘
+   - scikit-learn           # ML 유틸리티
+   - UMAP                   # 차원 축소
+   - HDBSCAN                # 클러스터링
+
+🔹 웹 크롤링/API
+   - BeautifulSoup4         # HTML 파싱
+   - Requests               # HTTP 클라이언트
+   - DuckDuckGo Search      # 웹 검색
+   - 네이버 뉴스 API        # 한국 뉴스
+   - YouTube Data API       # YouTube 데이터
+
+🔹 유틸리티
+   - python-dotenv          # 환경변수 관리
+   - yt-dlp                 # YouTube 다운로드
+   - FFmpeg                 # 오디오 처리
+
+================================================================================
+사용된 AI/ML 모델 명세
+================================================================================
+
+📊 팩트체크 시스템 (factcheck/)
+   
+   1. 문장 임베딩 모델
+      모델명: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+      용도: 하이브리드 검색 (의미 기반 유사도 측정)
+      크기: ~420MB
+      특징: 다국어 지원 (한국어, 영어 등 50개 언어)
+      
+   2. LLM 판정 모델 (선택적)
+      모델명: Hugging Face Transformers pipeline
+      용도: Evidence 기반 최종 판정
+      특징: 선택적 사용 (Rule-based로도 작동 가능)
+
+📊 페르소나 시스템 (persona/)
+   
+   1. 페르소나 생성 & 토론 모델
+      모델명: skt/kogpt2-base-v2
+      용도: 
+        - 댓글 기반 페르소나 생성 (comment_persona_engine.py)
+        - AI 토론자 대화 생성 (ai_debater.py)
+      크기: ~525MB
+      특징: 
+        - 한국어 특화 GPT-2 모델
+        - CPU 모드 지원 (torch.float32)
+        - 경량 버전으로 빠른 응답
+      라이선스: Apache 2.0
+      
+   2. 감정 분석 모델 (선택적)
+      모델명: jhgan/ko-alpaca-7b
+      용도: 댓글 감정 및 논조 분석 (analyzer.py)
+      크기: ~13GB
+      특징: 
+        - LLM 기반 감정 분석 (선택적)
+        - 기본은 규칙 기반 분석 사용 (메모리 효율)
+      하드웨어: GPU 권장 (VRAM 8GB+)
+
+📊 YouTube 파이프라인 (structure/)
+   
+   1. 음성-텍스트 변환 모델
+      모델명: OpenAI Whisper (small)
+      용도: YouTube 오디오 → 텍스트 변환 (transcribe.py)
+      크기: ~461MB
+      특징:
+        - 다국어 지원 (한국어 포함)
+        - CPU/GPU 모두 지원
+        - 높은 정확도
+      옵션: tiny, base, small, medium, large
+      
+   2. 토픽 모델링 (comments_topic/)
+      
+      a) 문장 임베딩 모델
+         모델명: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+         용도: 댓글 임베딩 (BERTopic 입력)
+         크기: ~420MB
+         
+      b) 토픽 추출 모델
+         모델명: BERTopic
+         용도: 댓글 주제 클러스터링 및 추출
+         특징: 
+           - HDBSCAN 클러스터링
+           - UMAP 차원 축소
+           - 한국어 토픽 추출
+
+================================================================================
+팀 협업 가이드
+================================================================================
+
+🔸 브랜치 전략
+   - main: 안정 버전
+   - develop: 개발 버전
+   - feature/*: 기능 개발
+   - 개인 브랜치: yuna_branch 등
+
+🔸 API 포트 할당
+   - factcheck: 8000
+   - persona: 8000 (독립 실행)
+   - structure: 8001
+
+🔸 환경 변수 관리
+   - .env 파일 사용 (Git 제외)
+   - .env.example 템플릿 제공
+   - API 키는 절대 커밋 금지
+
+🔸 의존성 관리
+   - requirements.txt 업데이트 후 커밋
+   - 가상환경 사용 필수
+   - 버전 명시 권장
+
+🔸 테스트
+   - 각 모듈마다 test 스크립트 제공
+   - API 문서로 수동 테스트 가능
+   - 배치 테스트 스크립트 활용
+
+================================================================================
+트러블슈팅
+================================================================================
+
+❌ CUDA out of memory
+   → 8bit/4bit 양자화 사용
+   → 배치 크기 줄이기
+   → GPU 메모리 확인
+
+❌ 모델 다운로드 실패
+   → 인터넷 연결 확인
+   → huggingface-cli login
+   → 프록시 설정 확인
+
+❌ API 연결 실패
+   → 서버 실행 여부 확인
+   → 포트 충돌 확인
+   → CORS 설정 확인
+
+❌ 한글 깨짐
+   → UTF-8 인코딩 확인
+   → 터미널 인코딩 설정
+   → Windows: chcp 65001
+
+❌ Import 오류
+   → 가상환경 활성화 확인
+   → __init__.py 파일 확인
+   → PYTHONPATH 설정 확인
+

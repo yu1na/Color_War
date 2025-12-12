@@ -1,0 +1,23 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.pytest_cache/
+.mypy_cache/
+.coverage
+coverage/
+dist/
+build/
+.env
+.env.*
+.idea/
+.vscode/
+*.log
+Thumbs.db
+Desktop.ini
+
+# YouTube 댓글 추출 결과
+extract_comments/
+

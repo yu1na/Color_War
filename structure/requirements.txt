@@ -1,0 +1,19 @@
+# 색깔전쟁 - AI 페르소나 배틀 시스템
+# 필수 패키지 (모두 무료!)
+
+fastapi>=0.104.0
+uvicorn>=0.24.0
+requests>=2.32.0
+python-dotenv>=1.0.0
+google-api-python-client>=2.0.0
+
+# YouTube 파이프라인 추가 패키지
+openai-whisper>=20231117
+yt-dlp>=2023.12.30
+ffmpeg-python>=0.2.0
+
+# 개발/테스트용 (선택사항)
+# pytest
+# black
+# flake8
+
